@@ -1,11 +1,13 @@
 from flask import Flask
+from flask import request 
 
 app = Flask(__name__)
 
+@app.route("/process_code", methods=['GET', 'POST'])
+def process_code():
+    print(request.form["code"])
+    return "code recieved"
 
-@app.route("/")
-def hello_world():
-    return "hello world"
 
 if __name__ == "__main__":
     app.run(debug=True)
