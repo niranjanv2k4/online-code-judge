@@ -12,21 +12,19 @@ function CodeArea() {
 
   function handleSubmit() {
     console.log(text);
-    setText("");
   }
 
   return (
 
-    //UI
     <div className="flex justify-center items-center flex-col p-4 h-screen">
       <div className='flex items-center w-full'>
-      <label
-        htmlFor="message"
-        className="block mb-3 text-lg font-semibold text-gray-800"
-      >
-        Code Editor
-      </label>
-      <div className='m-4 ml-auto'>
+        <label
+          htmlFor="message"
+          className="block mb-3 text-lg font-semibold text-gray-800"
+        >
+          Code Editor
+        </label>
+        <div className='m-4 ml-auto'>
           <button
             type="button"
             className="text-white bg-blue-500 hover:bg-blue-600 focus:ring-4 focus:ring-blue-300 shadow-md font-medium rounded-lg text-sm px-4 py-2.5"
