@@ -13,6 +13,10 @@ function CodeArea() {
     navigate("/");
   }
 
+  function handleClose(){
+    setResult(null);
+  }
+
   async function handleSubmit() {
     const response = await fetch("http://localhost:5000/process_code", {
       method: "POST",
@@ -71,7 +75,7 @@ function CodeArea() {
         </form>
 
       </div>
-      <ResultPanel result={result} />
+      <ResultPanel result={result} handleClose={handleClose}/>
     </div>
   )
 }

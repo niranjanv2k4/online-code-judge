@@ -39,10 +39,10 @@ def process_code(code):
 
     compilation_result = cont.exec_run(f"gcc {home}/main.c -o {home}/main")
     if(compilation_result.exit_code == 0):
-        status = "COMPILATION SUCCESSFULL"
+        status = "SUCCESS"
         output = cont.exec_run(f"{home}/main")
     else:
-        status = "COMPILATION ERROR"
+        status = "FAILURE"
         output = compilation_result
     
 
