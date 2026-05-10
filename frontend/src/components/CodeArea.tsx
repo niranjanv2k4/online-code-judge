@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAsyncError, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 import ResultPanel from './ResultPanel';
 
@@ -68,7 +68,7 @@ function CodeArea() {
             name="code"
             rows={4}
             className="flex-1 bg-gray-200 border border-gray-400 text-black rounded-md w-full p-3"
-            placeholder="Write your thoughts here..."
+            placeholder="Code here..."
             onChange={ (e) => setText(e.target.value) }
             value={text}>
           </textarea>

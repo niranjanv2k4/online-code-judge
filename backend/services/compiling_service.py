@@ -3,6 +3,18 @@ import docker.errors
 import docker.models
 import docker.models.containers
 
+active_containers : dict[str, docker.models.containers.Container] = {}
+client = docker.from_env()
+
+def strip_docker_headers(raw: bytes) -> bytes:
+    output = b""
+    while len(raw) >= 8:
+        # First byte = stream type (1=stdout, 2=stderr), next 3 = padding, next 4 = size
+        size = int.from_bytes(raw[4:8], byteorder='big')
+        output += raw[8:8 + size]
+        raw = raw[8 + size:]
+    return output
+
 def start_container() -> docker.models.containers.Container:
     client = docker.from_env()
 
@@ -28,25 +40,50 @@ def process_code(code):
         tar.addfile(info, io.BytesIO(content))
     
     data.seek(0)
-
     cont = start_container()
+    cont.put_archive("/tmp", data.read())
 
-    home = cont.exec_run("/bin/sh -c 'echo $HOME'").output.strip().decode()
+    compilation_result = cont.exec_run(cmd=["gcc", "main.c", "-o", "main"], workdir="/tmp")
+    contianer_id = cont.id
 
-    cont.put_archive(f"{home}/", data.read())
-
-    print(cont.exec_run(f"ls {home}/").output.strip().decode())
-
-    compilation_result = cont.exec_run(f"gcc {home}/main.c -o {home}/main")
-    if(compilation_result.exit_code == 0):
+    if compilation_result.exit_code == 0:
         status = "SUCCESS"
-        output = cont.exec_run(f"{home}/main")
+        active_containers[cont.id] = cont
     else:
         status = "FAILURE"
-        output = compilation_result
-    
+        contianer_id = None
+        cont.remove(force=True)
 
+    return compilation_result.exit_code, status, compilation_result.output.strip().decode(), contianer_id
+    
+def run_code(input, expected, container_id):
+
+    cont = active_containers[container_id]
+    
+    sock = cont.exec_run(cmd=["./main"], workdir="/tmp", stdin=True, socket=True)
+
+    sock.output._sock.sendall((input+"/").encode())
+
+    output = b""
+    while True:
+        Chunk = sock.output._sock.recv(4096)
+        if not Chunk:
+            break
+        output += Chunk
+
+    output = strip_docker_headers(output)
+
+    if output.decode() != expected:
+        exit_code = 1
+    else:
+        exit_code = 0
+    
+    active_containers.pop(container_id)
+    cont = client.containers.get(container_id=container_id)
     cont.kill()
 
-    return output.exit_code, status, output.output.strip().decode()
+    return exit_code, output.decode()
+    
+
+
 
