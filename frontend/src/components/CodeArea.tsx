@@ -31,9 +31,8 @@ function CodeArea() {
   return (
 
     <div className='flex'>
-      <div className={ result 
-      ? "w-[70%] flex justify-center items-center flex-col p-4 h-screen"  
-      : "w-full flex justify-center items-center flex-col p-4 h-screen"}>
+      <div className={`transition-all duration-700 flex justify-center items-center flex-col p-4 h-screen 
+      ${ result ? "w-[70%]" : "w-full"}`}>
         <div className='flex items-center w-full'>
           <label
             htmlFor="message"
