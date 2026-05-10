@@ -14,7 +14,7 @@ def start_container() -> docker.models.containers.Container:
 
     return cont
 
-def process_code(code) -> str:
+def process_code(code):
     data = io.BytesIO()
 
 # 1. tar.add() file only works with the actual file system paths it the input is a string we have to create the tar manually
@@ -39,14 +39,14 @@ def process_code(code) -> str:
 
     compilation_result = cont.exec_run(f"gcc {home}/main.c -o {home}/main")
     if(compilation_result.exit_code == 0):
-        print("COMPILATION SUCCESS")
+        status = "COMPILATION SUCCESSFULL"
         output = cont.exec_run(f"{home}/main")
     else:
-        print("COMPILATION ERROR")
+        status = "COMPILATION ERROR"
         output = compilation_result
     
 
     cont.kill()
 
-    return output.output.strip().decode()
+    return output.exit_code, status, output.output.strip().decode()
 
