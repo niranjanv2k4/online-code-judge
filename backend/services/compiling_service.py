@@ -3,9 +3,6 @@ import docker.errors
 import docker.models
 import docker.models.containers
 
-active_containers : dict[str, docker.models.containers.Container] = {}
-client = docker.from_env()
-
 def strip_docker_headers(raw: bytes) -> bytes:
     output = b""
     while len(raw) >= 8:
@@ -26,7 +23,7 @@ def start_container() -> docker.models.containers.Container:
 
     return cont
 
-def process_code(code):
+def process_code(code, input, expected):
     data = io.BytesIO()
 
 # 1. tar.add() file only works with the actual file system paths it the input is a string we have to create the tar manually
@@ -44,23 +41,19 @@ def process_code(code):
     cont.put_archive("/tmp", data.read())
 
     compilation_result = cont.exec_run(cmd=["gcc", "main.c", "-o", "main"], workdir="/tmp")
-    contianer_id = cont.id
 
     if compilation_result.exit_code == 0:
         status = "SUCCESS"
-        active_containers[cont.id] = cont
+        exit_code, output = run_code(input, expected, cont)
+        return exit_code, status, output
     else:
         status = "FAILURE"
-        contianer_id = None
         cont.remove(force=True)
-
-    return compilation_result.exit_code, status, compilation_result.output.strip().decode(), contianer_id
+        return compilation_result.exit_code, status, compilation_result.output.strip().decode()
     
-def run_code(input, expected, container_id):
+def run_code(input, expected, container):
 
-    cont = active_containers[container_id]
-    
-    sock = cont.exec_run(cmd=["./main"], workdir="/tmp", stdin=True, socket=True)
+    sock = container.exec_run(cmd=["./main"], workdir="/tmp", stdin=True, socket=True)
 
     sock.output._sock.sendall((input+"/").encode())
 
@@ -78,9 +71,7 @@ def run_code(input, expected, container_id):
     else:
         exit_code = 0
     
-    active_containers.pop(container_id)
-    cont = client.containers.get(container_id=container_id)
-    cont.kill()
+    container.kill()
 
     return exit_code, output.decode()
     
