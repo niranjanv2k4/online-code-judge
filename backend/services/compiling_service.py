@@ -45,6 +45,8 @@ def process_code(code, input, expected):
     if compilation_result.exit_code == 0:
         status = "SUCCESS"
         exit_code, output = run_code(input, expected, cont)
+        if exit_code == 1:
+            status = "FAILURE"
         return exit_code, status, output
     else:
         status = "FAILURE"
@@ -66,14 +68,14 @@ def run_code(input, expected, container):
 
     output = strip_docker_headers(output)
 
-    if output.decode() != expected:
+    if output.decode().rstrip() != expected:
         exit_code = 1
     else:
         exit_code = 0
     
     container.kill()
 
-    return exit_code, output.decode()
+    return exit_code, output.decode().rstrip()
     
 
 
