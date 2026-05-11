@@ -32,7 +32,7 @@ function ResultPanel({ code } : Props){
 
         const data = await response.json();
         
-        if(data.status === "FAILURE"){
+        if(data.status !== "SUCCESS"){
             setError(data.output)
             setOutput(data.output.trim())
         }else{
@@ -110,7 +110,7 @@ function ResultPanel({ code } : Props){
                         </button>
                 </form>
                 
-                { status !== "idle" && 
+                { status === "executed" && 
                     <div className="mt-8 flex flex-col">
                         <div className="flex">
                             <label className="flex items-center gap-2 text-sm font-medium text-slate-300">

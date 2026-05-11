@@ -2,6 +2,12 @@ import io, tarfile, docker
 import docker.errors
 import docker.models
 import docker.models.containers
+import time
+import threading
+
+output = None
+exit_code = 0
+status = "DEFAULT"
 
 def strip_docker_headers(raw: bytes) -> bytes:
     output = b""
@@ -31,7 +37,7 @@ def process_code(code, input, expected):
 # 3. tar format needs file size in the header before writing contents to it.
 
     with tarfile.open(fileobj=data, mode='w') as tar:
-        content = code.encode()  #convert python string into bytes
+        content = code.encode()
         info = tarfile.TarInfo("main.c")
         info.size = len(content)
         tar.addfile(info, io.BytesIO(content))
@@ -43,39 +49,64 @@ def process_code(code, input, expected):
     compilation_result = cont.exec_run(cmd=["gcc", "main.c", "-o", "main"], workdir="/tmp")
 
     if compilation_result.exit_code == 0:
-        status = "SUCCESS"
-        exit_code, output = run_code(input, expected, cont)
-        if exit_code == 1:
-            status = "FAILURE"
+        exit_code, status, output = run_code(input, expected, cont)
         return exit_code, status, output
     else:
         status = "FAILURE"
         cont.remove(force=True)
         return compilation_result.exit_code, status, compilation_result.output.strip().decode()
     
-def run_code(input, expected, container):
+
+def worker(input, expected, container):
+
+    global output, exit_code, status
 
     sock = container.exec_run(cmd=["./main"], workdir="/tmp", stdin=True, socket=True)
 
-    sock.output._sock.sendall((input+"/").encode())
+    sock.output._sock.sendall((input+"\n").encode())
 
     output = b""
     while True:
-        Chunk = sock.output._sock.recv(4096)
+        try:
+            Chunk = sock.output._sock.recv(4096)
+        except Exception:
+            sock.output._sock.close()
+            return
+
         if not Chunk:
             break
         output += Chunk
 
-    output = strip_docker_headers(output)
+    output = strip_docker_headers(output).decode().rstrip()
 
-    if output.decode().rstrip() != expected:
+    if output != expected:
+        status = "FAILURE"
         exit_code = 1
     else:
+        status = "SUCCESS"
         exit_code = 0
-    
-    container.kill()
 
-    return exit_code, output.decode().rstrip()
+    sock.output._sock.close()
+
+def run_code(input, expected, container):
+
+    global output, exit_code, status
+
+    t = threading.Thread(target=worker, args=[input, expected, container])
+    t.start()
+    t.join(timeout=5)
+
+    if t.is_alive():
+        container.remove(force=True)
+        status = "TLE"
+        output = "TIME LIMIT EXCEEDED"
+        exit_code = 1
+    
+    return exit_code, status, output
+
+
+    
+    
     
 
 
