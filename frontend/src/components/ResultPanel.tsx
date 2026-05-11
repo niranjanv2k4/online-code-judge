@@ -71,7 +71,7 @@ function ResultPanel({ code } : Props){
                             name="" 
                             id="input" 
                             placeholder="Input"
-                            className="bg-slate-950 text-slate-300 border border-gray-300 px-2 mt-2 pt-5 rounded-md w-full h-40"
+                            className="bg-slate-950 text-slate-300 border rborder-gray-300 px-2 mt-2 pt-5 rounded-md w-full h-40"
                             onChange={ (e) =>  setInput(e.target.value) }
                             value={input}
                         >
@@ -94,7 +94,7 @@ function ResultPanel({ code } : Props){
                     </div>
                     <button 
                         type="button"
-                        className="text-white font-bold bg-indigo-600 w-full p-3 mt-5 rounded-md mt-2 transition-transform hover:scale-102 flex items-center justify-center"
+                        className="text-white font-bold bg-indigo-600 w-full p-3 mt-5 rounded-md mt-2 transition-transform hover:scale-101 flex items-center justify-center"
                         onClick={handleInputSubmit}
                         disabled={status === "running"} > 
                         { status === "running"

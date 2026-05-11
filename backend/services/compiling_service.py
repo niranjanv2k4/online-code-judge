@@ -103,11 +103,3 @@ def run_code(input, expected, container):
         exit_code = 1
     
     return exit_code, status, output
-
-
-    
-    
-    
-
-
-
