@@ -25,6 +25,10 @@ function CodeArea() {
     }
   }
 
+  function handleReset(){
+    setCode("");
+  }
+
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>){
     if(e.key === "Tab"){
       e.preventDefault()
@@ -44,8 +48,8 @@ function CodeArea() {
 
   return (
 
-    <div className='flex bg-slate-900 '>
-      <div className="transition-all duration-700 flex justify-center items-center flex-col p-4 h-screen w-[70%]">
+    <div className='flex bg-slate-900 h-screen'>
+      <div className="transition-all duration-700 flex flex-col p-4 h-full w-[70%] box-border overflow-hidden">
         <div className='flex items-center w-full'>
           <label
             htmlFor="message"
@@ -53,25 +57,25 @@ function CodeArea() {
           >
             Code Editor
           </label>
-          <div className='m-4 ml-auto'>
+          <div className='gap-4 flex ml-auto'>
             <button
               type="button"
-              className="text-white bg-indigo-600 hover:bg-blue-600 focus:ring-4 focus:ring-blue-300 shadow-md font-medium rounded-lg text-sm px-4 py-2.5"
-              onClick={ handleGoBack }
+              className="w-28 text-white bg-indigo-600 hover:bg-blue-600 shadow-md font-medium rounded-lg text-sm px-4 py-2.5 mr-4"
+              onClick={ handleReset }
               >
-              Go Back
+              Reset
             </button>
 
             <button
               type="button"
-              className="text-white bg-indigo-600 hover:bg-blue-600 focus:ring-4 focus:ring-blue-300 shadow-md font-medium rounded-lg text-sm px-4 py-2.5"
+              className="w-28 text-white bg-indigo-600 hover:bg-blue-600 shadow-md font-medium rounded-lg text-sm px-4 py-2.5"
               onClick={ handleGoBack }
               >
               Go Back
             </button>
           </div>
         </div>
-        <div className='w-full h-full flex overflow-hidden'>
+        <div className='w-full min-h-0 flex flex-1 overflow-hidden  mt-4'>
           <div 
             className='text-white w-[2%] overflow-hidden bg-slate-700 border border-gray-400 rounded-l-md flex items-center p-3 flex-col'
             ref={lineRef}
