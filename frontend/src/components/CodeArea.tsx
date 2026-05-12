@@ -1,15 +1,37 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useRef } from 'react';
 
 import ResultPanel from './ResultPanel';
 
 function CodeArea() {
   const navigate = useNavigate();
+  const ref = useRef<HTMLTextAreaElement>(null);
 
   const [code, setCode] = useState("");
+  
+  const lines = code.split("\n").length
+  const arr = Array.from({ length: lines }, (_, i) => i + 1);
 
   function handleGoBack () {
     navigate("/");
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>){
+    if(e.key === "Tab"){
+      e.preventDefault()
+      const start = e.currentTarget.selectionStart;
+      const end = e.currentTarget.selectionEnd;
+
+      setCode(code.slice(0, start) + "\t" + code.slice(end))
+
+      setTimeout(() => {
+        if (ref.current) {
+          ref.current.selectionStart = start + 1;
+          ref.current.selectionEnd = start + 1;
+        }
+      }, 0);
+    }
   }
 
   return (
@@ -41,16 +63,24 @@ function CodeArea() {
             </button>
           </div>
         </div>
-        <form id="codeForm" className='w-full h-full flex'>
-          <textarea 
-            id="message" 
-            name="code"
-            rows={4}
-            className="flex-1 bg-slate-700 border border-gray-400 text-white rounded-md w-full p-3"
-            placeholder="Code here..."
-            onChange={ (e) => setCode(e.target.value) }>
-          </textarea>
-        </form>
+        <div className='w-full h-full flex'>
+          <div className='text-white w-[2%] bg-slate-700 border border-gray-400 rounded-l-md flex items-center p-3 flex-col'> {arr.map((value) => (
+            <div className='text-xs font-semibold leading-6'>{value}</div>
+          ))} </div>
+          <form id="codeForm" className='w-full h-full flex'>
+            <textarea 
+              id="message" 
+              name="code"
+              rows={4}
+              className="flex-1 bg-slate-700 border border-gray-400 text-white rounded-r-md w-full p-3 focus:outline-none focus:ring-0 leading-6"
+              placeholder="Code here..."
+              onChange={ (e) => setCode(e.target.value) }
+              onKeyDown={ handleKeyDown }
+              value={code}
+              ref={ref}>
+            </textarea>
+          </form>
+        </div>
 
       </div>
       <ResultPanel code={code}/>

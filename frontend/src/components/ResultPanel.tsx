@@ -40,10 +40,6 @@ function ResultPanel({ code } : Props){
             setOutput(data.output.trim())
         }
 
-        // console.log(expected)
-        // console.log(output)
-        // console.log(data.status)
-
         setStatus("executed")
 
     }
