@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRef } from 'react';
 
@@ -6,7 +6,9 @@ import ResultPanel from './ResultPanel';
 
 function CodeArea() {
   const navigate = useNavigate();
-  const ref = useRef<HTMLTextAreaElement>(null);
+
+  const textAreaRef = useRef<HTMLTextAreaElement>(null);
+  const lineRef = useRef<HTMLDivElement>(null);
 
   const [code, setCode] = useState("");
   
@@ -15,6 +17,12 @@ function CodeArea() {
 
   function handleGoBack () {
     navigate("/");
+  }
+
+  function handleScroll(e: React.UIEvent<HTMLTextAreaElement>){
+    if (lineRef.current) {
+      lineRef.current.scrollTop = e.currentTarget.scrollTop;
+    }
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>){
@@ -26,9 +34,9 @@ function CodeArea() {
       setCode(code.slice(0, start) + "\t" + code.slice(end))
 
       setTimeout(() => {
-        if (ref.current) {
-          ref.current.selectionStart = start + 1;
-          ref.current.selectionEnd = start + 1;
+        if (textAreaRef.current) {
+          textAreaRef.current.selectionStart = start + 1;
+          textAreaRef.current.selectionEnd = start + 1;
         }
       }, 0);
     }
@@ -36,7 +44,7 @@ function CodeArea() {
 
   return (
 
-    <div className='flex bg-slate-900'>
+    <div className='flex bg-slate-900 '>
       <div className="transition-all duration-700 flex justify-center items-center flex-col p-4 h-screen w-[70%]">
         <div className='flex items-center w-full'>
           <label
@@ -63,10 +71,15 @@ function CodeArea() {
             </button>
           </div>
         </div>
-        <div className='w-full h-full flex'>
-          <div className='text-white w-[2%] bg-slate-700 border border-gray-400 rounded-l-md flex items-center p-3 flex-col'> {arr.map((value) => (
-            <div className='text-xs font-semibold leading-6'>{value}</div>
-          ))} </div>
+        <div className='w-full h-full flex overflow-hidden'>
+          <div 
+            className='text-white w-[2%] overflow-hidden bg-slate-700 border border-gray-400 rounded-l-md flex items-center p-3 flex-col'
+            ref={lineRef}
+            > 
+            {arr.map((value) => (
+              <div className='text-xs font-semibold leading-6'>{value}</div>
+            ))} 
+          </div>
           <form id="codeForm" className='w-full h-full flex'>
             <textarea 
               id="message" 
@@ -76,8 +89,9 @@ function CodeArea() {
               placeholder="Code here..."
               onChange={ (e) => setCode(e.target.value) }
               onKeyDown={ handleKeyDown }
+              onScroll={ handleScroll }
               value={code}
-              ref={ref}>
+              ref={textAreaRef}>
             </textarea>
           </form>
         </div>
