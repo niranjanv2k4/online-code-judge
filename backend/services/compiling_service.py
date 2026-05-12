@@ -22,10 +22,10 @@ def start_container() -> docker.models.containers.Container:
     client = docker.from_env()
 
     try:
-        cont = client.containers.run("code_runner_image", command="sleep 1000", detach=True)
+        cont = client.containers.run("code_runner_image", command="sleep 1000", detach=True, pids_limit=16)
     except docker.errors.ImageNotFound:
         client.images.build(path="./", tag="code_runner_image")
-        cont = client.containers.run("code_runner_image", command="sleep 1000", detach=True)
+        cont = client.containers.run("code_runner_image", command="sleep 1000", detach=True, pids_limit=16)
 
     return cont
 
