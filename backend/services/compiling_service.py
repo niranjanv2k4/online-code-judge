@@ -22,34 +22,30 @@ def start_container() -> docker.models.containers.Container:
     client = docker.from_env()
 
     try:
-        cont = client.containers.run("code_runner_image", command="sleep 1000", detach=True, pids_limit=16)
+        cont = client.containers.run("code_runner_image", command="sleep 1000", detach=True, pids_limit=16, mem_limit="200m", read_only=True, tmpfs={
+            "/home/sandbox/workdir/" : 'size=16m,uid=1000,gid=1000,exec'
+        })
+
     except docker.errors.ImageNotFound:
         client.images.build(path="./", tag="code_runner_image")
-        cont = client.containers.run("code_runner_image", command="sleep 1000", detach=True, pids_limit=16)
+        cont = client.containers.run("code_runner_image", command="sleep 1000", detach=True, pids_limit=16, mem_limit="200m", read_only=True, tmpfs={
+            "/home/sandbox/workdir/" : 'size=16m,uid=1000,gid=1000,exec'
+        })
 
     return cont
 
 def process_code(code, input, expected):
-    data = io.BytesIO()
-
-# 1. tar.add() file only works with the actual file system paths it the input is a string we have to create the tar manually
-# 2. tarfile() create the header with the given arguments
-# 3. tar format needs file size in the header before writing contents to it.
-
-    with tarfile.open(fileobj=data, mode='w') as tar:
-        content = code.encode()
-        info = tarfile.TarInfo("main.c")
-        info.size = len(content)
-        tar.addfile(info, io.BytesIO(content))
-    
-    data.seek(0)
     cont = start_container()
-    cont.put_archive("/tmp", data.read())
 
-    compilation_result = cont.exec_run(cmd=["gcc", "main.c", "-o", "main"], workdir="/tmp")
+    res = cont.exec_run("sh -c 'cat > /home/sandbox/workdir/main.c'", socket=True, stdin=True)
+    res.output._sock.sendall(code.encode())
+    res.output._sock.close()
+
+    compilation_result = cont.exec_run(cmd=["gcc", "main.c", "-o", "main"], workdir="/home/sandbox/workdir")
 
     if compilation_result.exit_code == 0:
         exit_code, status, output = run_code(input, expected, cont)
+        cont.remove(force=True)
         return exit_code, status, output
     else:
         status = "FAILURE"
@@ -57,36 +53,35 @@ def process_code(code, input, expected):
         return compilation_result.exit_code, status, compilation_result.output.strip().decode()
     
 
+    
+
 def worker(input, expected, container):
 
     global output, exit_code, status
 
-    sock = container.exec_run(cmd=["./main"], workdir="/tmp", stdin=True, socket=True)
+    res = container.exec_run("sh -c 'cat > /home/sandbox/workdir/input.txt'", socket=True, stdin=True)
+    res.output._sock.sendall(input.encode())
+    res.output._sock.close()
 
-    sock.output._sock.sendall((input+"\n").encode())
+    exit_code, (output, stderr) = container.exec_run("sh -c './main < input.txt'", workdir="/home/sandbox/workdir", demux=True)
+    if output:
+        output = output.decode().rstrip()
+    else:
+        output = ""
 
-    output = b""
-    while True:
-        try:
-            Chunk = sock.output._sock.recv(4096)
-        except Exception:
-            sock.output._sock.close()
-            return
+    container.reload()
 
-        if not Chunk:
-            break
-        output += Chunk
-
-    output = strip_docker_headers(output).decode().rstrip()
-
-    if output != expected:
+    if container.attrs["State"]["OOMKilled"]:
+        status = "FAILURE"
+        output = "MEMORY LIMIT EXCEEDED"
+        exit_code = 1
+            
+    elif output != expected:
         status = "FAILURE"
         exit_code = 1
     else:
         status = "SUCCESS"
         exit_code = 0
-
-    sock.output._sock.close()
 
 def run_code(input, expected, container):
 
@@ -97,7 +92,6 @@ def run_code(input, expected, container):
     t.join(timeout=5)
 
     if t.is_alive():
-        container.remove(force=True)
         status = "TLE"
         output = "TIME LIMIT EXCEEDED"
         exit_code = 1

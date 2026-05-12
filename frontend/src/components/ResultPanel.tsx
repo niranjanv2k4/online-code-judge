@@ -31,7 +31,7 @@ function ResultPanel({ code } : Props){
         })
 
         const data = await response.json();
-        
+        console.log(data)
         if(data.status !== "SUCCESS"){
             setError(data.output)
             setOutput(data.output.trim())
