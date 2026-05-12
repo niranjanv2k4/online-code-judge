@@ -5,9 +5,11 @@ import docker.models.containers
 import time
 import threading
 
-output = None
-exit_code = 0
-status = "DEFAULT"
+class Result:
+    def __init__(self):
+        self.exit_code = 0
+        self.status = ""
+        self.output = ""
 
 def strip_docker_headers(raw: bytes) -> bytes:
     output = b""
@@ -35,6 +37,9 @@ def start_container() -> docker.models.containers.Container:
     return cont
 
 def process_code(code, input, expected):
+
+    final_result = Result()
+
     cont = start_container()
 
     res = cont.exec_run("sh -c 'cat > /home/sandbox/workdir/main.c'", socket=True, stdin=True)
@@ -44,56 +49,63 @@ def process_code(code, input, expected):
     compilation_result = cont.exec_run(cmd=["gcc", "main.c", "-o", "main"], workdir="/home/sandbox/workdir")
 
     if compilation_result.exit_code == 0:
-        exit_code, status, output = run_code(input, expected, cont)
-        cont.remove(force=True)
-        return exit_code, status, output
+        run_code(input, expected, cont, final_result)
     else:
-        status = "FAILURE"
-        cont.remove(force=True)
-        return compilation_result.exit_code, status, compilation_result.output.strip().decode()
+        final_result.status = "FAILURE"
+        final_result.exit_code = compilation_result.exit_code
+        final_result.output = compilation_result.output.strip().decode()
+    
+    cont.remove(force=True)
+    return final_result.exit_code, final_result.status, final_result.output
+
     
 
-    
-
-def worker(input, expected, container):
-
-    global output, exit_code, status
+def worker(input, container, worker_result):
 
     res = container.exec_run("sh -c 'cat > /home/sandbox/workdir/input.txt'", socket=True, stdin=True)
     res.output._sock.sendall(input.encode())
     res.output._sock.close()
 
-    exit_code, (output, stderr) = container.exec_run("sh -c './main < input.txt'", workdir="/home/sandbox/workdir", demux=True)
-    if output:
-        output = output.decode().rstrip()
+    try:
+        exit_code, (stdout, stderr) = container.exec_run("sh -c './main < input.txt'", workdir="/home/sandbox/workdir", demux=True)
+    except Exception:
+        return
+    
+    worker_result.exit_code = exit_code
+    if exit_code != 0:
+        worker_result.status = "FAILURE"
+        if stderr is not None:
+            worker_result.output = stderr.decode().rstrip()
     else:
-        output = ""
+        worker_result.status = "SUCCESS"
+        worker_result.output = stdout.decode().rstrip()
+
+            
+
+def run_code(input, expected, container, final_result):
+
+    worker_result = Result()
+
+    t = threading.Thread(target=worker, args=[input, container, worker_result])
+    t.start()
+    t.join(timeout=5)
 
     container.reload()
 
     if container.attrs["State"]["OOMKilled"]:
-        status = "FAILURE"
-        output = "MEMORY LIMIT EXCEEDED"
-        exit_code = 1
-            
-    elif output != expected:
-        status = "FAILURE"
-        exit_code = 1
+        final_result.status = "FAILURE"
+        final_result.output = "MEMORY LIMIT EXCEEDED"
+        final_result.exit_code = 1
+    elif t.is_alive():
+        final_result.status = "TLE"
+        final_result.output = "TIME LIMIT EXCEEDED"
+        final_result.exit_code = 1
+    elif worker_result.output != expected.rstrip():
+        final_result.status = "FAILURE"
+        final_result.exit_code = 1
+        final_result.output = worker_result.output
     else:
-        status = "SUCCESS"
-        exit_code = 0
-
-def run_code(input, expected, container):
-
-    global output, exit_code, status
-
-    t = threading.Thread(target=worker, args=[input, expected, container])
-    t.start()
-    t.join(timeout=5)
-
-    if t.is_alive():
-        status = "TLE"
-        output = "TIME LIMIT EXCEEDED"
-        exit_code = 1
+        final_result.output = worker_result.output
+        final_result.status = "SUCCESS"
+        final_result.exit_code = 0
     
-    return exit_code, status, output
