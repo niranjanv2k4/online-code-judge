@@ -1,12 +1,14 @@
-import { useState } from "react"
+import React, { useState } from "react"
 import { FileInput, FileOutput, Loader2, Play, TerminalSquare, CheckCircle2, XCircle } from 'lucide-react'
 
 type Props = {
     code: string
+    width: number
+    language: string
 }
 
 
-function ResultPanel({ code } : Props){
+function ResultPanel({ code, width, language } : Props){
     
     const [input, setInput] = useState("");
     const [output, setOutput] = useState<string | null>(null);
@@ -18,7 +20,9 @@ function ResultPanel({ code } : Props){
         setInput("");
         setOutput("");
         setExpected("");
+        setStatus("idle");
     }
+
     async function handleInputSubmit(){
         
         setStatus("running");
@@ -30,6 +34,7 @@ function ResultPanel({ code } : Props){
             },
             body: JSON.stringify({
                 code: code,
+                language: language,
                 input: input,
                 expected: expected,
             })
@@ -50,30 +55,29 @@ function ResultPanel({ code } : Props){
     }
 
     return (
-        <div className="w-[30%] h-full flex flex-col overflow-hidden">
-            <div className="p-4 flex items-center border pb-0">
+        <div className={`h-full flex flex-col overflow-hidden p-4`} style={{ width: `${width}%`,minWidth: "300px" }}>
+            <div className="flex items-center border-b border-slate-800 h-16">
                 <label
                 htmlFor="message"
-                className="block mb-3 text-lg font-semibold text-slate-300"
+                className="block text-lg font-semibold text-slate-300  px-4 py-3"
                 >
                     TEST CASES
                 </label>
                 <button
                 type="button"
-                className="ml-auto w-28 text-white bg-indigo-600 hover:bg-blue-600 shadow-md font-medium rounded-lg text-sm px-4 py-2.5 m-4"
+                className="ml-auto w-28 text-white bg-indigo-600 hover:bg-blue-600 shadow-md font-medium rounded-lg text-sm px-4 py-2.5"
                 onClick={ handleReset }
                 >
                 Reset
                 </button>
             </div>
             <div className={`
-                border-l 
                 w-full
                 flex-1
                 min-h-0
                 box-border
                 bg-slate-900
-                p-2
+                mt-4
                 transition-all
                 duration-700
                 overflow-hidden

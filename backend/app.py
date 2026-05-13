@@ -13,10 +13,11 @@ CORS(app)
 def recieve_code():
 
     code = request.json["code"]
+    language = request.json["language"]
     input = request.json['input']
     expected = request.json['expected']
 
-    exit_code, status, output = process_code(code,input, expected)
+    exit_code, status, output = process_code(code, language, input, expected)
 
     return jsonify({
         "exit_code": exit_code,

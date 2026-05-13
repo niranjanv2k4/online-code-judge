@@ -1,20 +1,33 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRef } from 'react';
-
 import ResultPanel from './ResultPanel';
+import { Code, CodeXml, SquareCode, Terminal, FileCode } from 'lucide-react';
+
 
 function CodeArea() {
   const navigate = useNavigate();
 
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const lineRef = useRef<HTMLDivElement>(null);
+  const widthRef = useRef<HTMLDivElement>(null);
 
   const [code, setCode] = useState("");
+  const [width, setWidth] = useState(30);
+  const [dragging, setDragging] = useState(false);
+  const [language, setLanguage] = useState("C");
+  const [isOpen, setIsOpen] = useState(false);
   
   const lines = code.split("\n").length
   const arr = Array.from({ length: lines }, (_, i) => i + 1);
 
+  function handleResize(e : React.MouseEvent<HTMLDivElement>){
+    if(dragging){
+      var pos = e.clientX;
+      var percentage = (pos / widthRef.current.clientWidth) * 100;
+      setWidth(100 - percentage)
+    }
+  }
   function handleGoBack () {
     navigate("/");
   }
@@ -48,15 +61,62 @@ function CodeArea() {
 
   return (
 
-    <div className='flex bg-slate-900 h-screen'>
-      <div className="transition-all duration-700 flex flex-col p-4 h-full w-[70%] box-border overflow-hidden">
-        <div className='flex items-center w-full'>
-          <label
-            htmlFor="message"
-            className="block mb-3 text-lg font-semibold text-slate-300"
-          >
-            Code Editor
-          </label>
+    <div className='flex bg-slate-900 h-screen' ref={widthRef} onMouseMove={handleResize}  onMouseUp={() => setDragging(false)}>
+      <div className="transition-all duration-700 flex flex-col p-4 h-full flex-1 box-border overflow-hidden">
+        <div className='flex items-center w-full border-b border-slate-800 h-16'>
+          <div className="flex items-center justify-between px-4 py-3">
+
+            <div className="flex items-center gap-3">
+
+              <CodeXml size={22} className="text-slate-300" />
+
+              <h2 className="text-lg font-semibold text-slate-200">
+                Code Editor
+              </h2>
+
+              <div className="h-5 w-px bg-slate-700"></div>
+
+            </div>
+
+            {/* Right Section */}
+            <div className="relative inline-block text-left">
+
+              <button
+                onClick={() => setIsOpen(true)}
+                className="w-20 flex items-center gap-2 rounded-md bg-slate-800 px-3 py-2 text-sm font-medium text-slate-200 ring-1 ring-slate-700 transition hover:bg-slate-700"
+              >
+                {language}
+
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  className="h-4 w-4 text-slate-400 ml-auto"
+                >
+                  <path
+                    fillRule="evenodd"
+                    clipRule="evenodd"
+                    d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z"
+                  />
+                </svg>
+              </button>
+
+              {/* Dropdown */}
+              {isOpen && 
+                <div className="absolute right-0 mt-2 w-56 overflow-hidden rounded-lg bg-slate-800 shadow-xl ring-1 ring-slate-700">
+
+                <button className="w-full px-4 py-2 text-left text-sm text-slate-300 hover:bg-slate-700" onClick={() => {setIsOpen(false); setLanguage("C")}}>
+                  C
+                </button>
+
+                <button className="w-full px-4 py-2 text-left text-sm text-slate-300 hover:bg-slate-700" onClick={() => {setIsOpen(false); setLanguage("C++")}}>
+                  C++
+                </button>
+              </div>}
+              
+
+            </div>
+          </div>
           <div className='gap-4 flex ml-auto'>
             <button
               type="button"
@@ -101,7 +161,13 @@ function CodeArea() {
         </div>
 
       </div>
-      <ResultPanel code={code}/>
+      <div className='flex flex-col text-white justify-center w-1
+        bg-slate-700
+        hover:bg-indigo-500
+        cursor-col-resize
+        transition-colors' onMouseDown={ () => setDragging(true)}>
+      </div>
+      <ResultPanel code={code} width={width} language={language}/>
     </div>
   )
 }

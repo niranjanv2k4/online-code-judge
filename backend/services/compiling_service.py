@@ -37,17 +37,24 @@ def start_container() -> docker.models.containers.Container:
 
     return cont
 
-def process_code(code, input, expected):
+def process_code(code, language, input, expected):
 
     final_result = Result()
 
     try: 
         cont = start_container()
-        res = cont.exec_run("sh -c 'cat > /home/sandbox/workdir/main.c'", socket=True, stdin=True)
+        if language == "C":
+            res = cont.exec_run("sh -c 'cat > /home/sandbox/workdir/main.c'", socket=True, stdin=True)
+        else:
+            res = cont.exec_run("sh -c 'cat > /home/sandbox/workdir/main.cpp'", socket=True, stdin=True)
         res.output._sock.sendall(code.encode())
         res.output._sock.close()
+        
+        if language == "C":
+            compilation_result = cont.exec_run(cmd=["gcc", "main.c", "-o", "main"], workdir="/home/sandbox/workdir")
+        else:
+            compilation_result = cont.exec_run(cmd=["g++", "main.cpp", "-o", "main"], workdir="/home/sandbox/workdir")
 
-        compilation_result = cont.exec_run(cmd=["gcc", "main.c", "-o", "main"], workdir="/home/sandbox/workdir")
 
         if compilation_result.exit_code == 0:
             run_code(input, expected, cont, final_result)
