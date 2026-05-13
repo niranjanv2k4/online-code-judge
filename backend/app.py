@@ -4,8 +4,20 @@ from flask_cors import CORS
 
 from services.compiling_service import process_code
 from services.compiling_service import run_code
+from services.authentication import validate
+from services.authentication import new_user
+
+import psycopg2
 
 app = Flask(__name__)
+
+conn = psycopg2.connect(
+    host="localhost",
+    port=5432,
+    database="authdb",
+    user="postgres",
+    password="secret"
+)
 
 CORS(app)
 
@@ -25,6 +37,26 @@ def recieve_code():
         "output" : output,
     })
 
+@app.route("/login", methods=['POST'])
+def login():
+    username = request.json["username"]
+    password = request.json["password"]
+
+    output = validate(conn, username, password)
+
+    return jsonify({
+        "output": output
+    })
+
+@app.route("/register", methods=['POST'])
+def register():
+    username = request.json["username"]
+    password = request.json["password"]
+
+    output = new_user(conn, username, password)
+    return jsonify({
+        "output" : output
+    })
 
 if __name__ == "__main__":
     app.run(debug=True)
