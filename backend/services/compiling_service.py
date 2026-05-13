@@ -26,13 +26,13 @@ def start_container() -> docker.models.containers.Container:
     try:
         cont = client.containers.run("code_runner_image", command="sleep 1000", detach=True, pids_limit=16, mem_limit="200m", read_only=True, tmpfs={
             "/home/sandbox/workdir/" : 'size=16m,uid=1000,gid=1000,exec'
-        })
+        }, network_disabled=True, cap_drop=["ALL"], security_opt=["no-new-privilege"])
 
     except docker.errors.ImageNotFound:
         client.images.build(path="./", tag="code_runner_image")
         cont = client.containers.run("code_runner_image", command="sleep 1000", detach=True, pids_limit=16, mem_limit="200m", read_only=True, tmpfs={
             "/home/sandbox/workdir/" : 'size=16m,uid=1000,gid=1000,exec'
-        })
+        }, network_disabled=True, cap_drop=["ALL"], security_opt=["no-new-privilege"])
 
     return cont
 
@@ -40,22 +40,29 @@ def process_code(code, input, expected):
 
     final_result = Result()
 
-    cont = start_container()
+    try: 
+        cont = start_container()
+        res = cont.exec_run("sh -c 'cat > /home/sandbox/workdir/main.c'", socket=True, stdin=True)
+        res.output._sock.sendall(code.encode())
+        res.output._sock.close()
 
-    res = cont.exec_run("sh -c 'cat > /home/sandbox/workdir/main.c'", socket=True, stdin=True)
-    res.output._sock.sendall(code.encode())
-    res.output._sock.close()
+        compilation_result = cont.exec_run(cmd=["gcc", "main.c", "-o", "main"], workdir="/home/sandbox/workdir")
 
-    compilation_result = cont.exec_run(cmd=["gcc", "main.c", "-o", "main"], workdir="/home/sandbox/workdir")
+        if compilation_result.exit_code == 0:
+            run_code(input, expected, cont, final_result)
+        else:
+            final_result.status = "FAILURE"
+            final_result.exit_code = compilation_result.exit_code
+            final_result.output = compilation_result.output.strip().decode()
 
-    if compilation_result.exit_code == 0:
-        run_code(input, expected, cont, final_result)
-    else:
+    except docker.errors.DockerException:
+        final_result.exit_code = 1
         final_result.status = "FAILURE"
-        final_result.exit_code = compilation_result.exit_code
-        final_result.output = compilation_result.output.strip().decode()
-    
-    cont.remove(force=True)
+        final_result.output = "TRY RUNNING ARAIN"
+
+    finally:
+        cont.remove(force=True)
+        
     return final_result.exit_code, final_result.status, final_result.output
 
     
