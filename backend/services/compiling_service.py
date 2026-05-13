@@ -4,6 +4,7 @@ import docker.models
 import docker.models.containers
 import time
 import threading
+import socket
 
 class Result:
     def __init__(self):
@@ -26,13 +27,13 @@ def start_container() -> docker.models.containers.Container:
     try:
         cont = client.containers.run("code_runner_image", command="sleep 1000", detach=True, pids_limit=16, mem_limit="200m", read_only=True, tmpfs={
             "/home/sandbox/workdir/" : 'size=16m,uid=1000,gid=1000,exec'
-        }, network_disabled=True, cap_drop=["ALL"], security_opt=["no-new-privilege"])
+        }, network_disabled=True, cap_drop=["ALL"], security_opt=["no-new-privileges:true"])
 
     except docker.errors.ImageNotFound:
         client.images.build(path="./", tag="code_runner_image")
         cont = client.containers.run("code_runner_image", command="sleep 1000", detach=True, pids_limit=16, mem_limit="200m", read_only=True, tmpfs={
             "/home/sandbox/workdir/" : 'size=16m,uid=1000,gid=1000,exec'
-        }, network_disabled=True, cap_drop=["ALL"], security_opt=["no-new-privilege"])
+        }, network_disabled=True, cap_drop=["ALL"], security_opt=["no-new-privileges:true"])
 
     return cont
 
@@ -69,9 +70,32 @@ def process_code(code, input, expected):
 
 def worker(input, container, worker_result):
 
-    res = container.exec_run("sh -c 'cat > /home/sandbox/workdir/input.txt'", socket=True, stdin=True)
-    res.output._sock.sendall(input.encode())
-    res.output._sock.close()
+    # res = container.exec_run("sh -c 'cat > /home/sandbox/workdir/input.txt'", socket=True, stdin=True)
+    # res.output._sock.sendall(input.encode())
+    # res.output._sock.close()
+
+    client = docker.from_env()
+
+    exec_instance = client.api.exec_create(
+        container=container.id, 
+        cmd="sh -c 'cat > /home/sandbox/workdir/input.txt'",
+        stdin=True,
+        stdout=True,
+        stderr=True)
+    
+    exec_id = exec_instance["Id"]
+
+    sock = client.api.exec_start(exec_id=exec_id, socket=True)
+
+    sock._sock.sendall(input.encode())
+    sock._sock.shutdown(socket.SHUT_WR)
+
+    while True:
+        info = client.api.exec_inspect(exec_id=exec_id)
+        if not info["Running"]:
+            break
+
+        time.sleep(0.01)
 
     try:
         exit_code, (stdout, stderr) = container.exec_run("sh -c './main < input.txt'", workdir="/home/sandbox/workdir", demux=True)
