@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRef } from 'react';
 import ResultPanel from './ResultPanel';
-import { Code, CodeXml, SquareCode, Terminal, FileCode, ArrowDownAZ } from 'lucide-react';
+import { User, CodeXml } from 'lucide-react';
 
 
 function CodeArea() {
@@ -54,8 +54,9 @@ function CodeArea() {
       setWidth(100 - percentage)
     }
   }
-  function handleGoBack () {
-    navigate("/");
+  function handleLogOut () {
+    localStorage.removeItem("token")
+    navigate("/login")
   }
 
   function handleScroll(e: React.UIEvent<HTMLTextAreaElement>){
@@ -146,7 +147,7 @@ function CodeArea() {
           <div className='gap-4 flex ml-auto'>
             <button
               type="button"
-              className="w-28 text-white bg-indigo-600 hover:bg-blue-600 shadow-md font-medium rounded-lg text-sm px-4 py-2.5 mr-4"
+              className="w-28 text-white bg-indigo-600 hover:bg-blue-600 shadow-md font-medium rounded-lg text-sm px-4 py-2.5"
               onClick={ handleReset }
               >
               Reset
@@ -155,10 +156,12 @@ function CodeArea() {
             <button
               type="button"
               className="w-28 text-white bg-indigo-600 hover:bg-blue-600 shadow-md font-medium rounded-lg text-sm px-4 py-2.5"
-              onClick={ handleGoBack }
+              onClick={ handleLogOut }
               >
-              Go Back
+              Log Out
             </button>
+
+            <User size={40} className='text- bg-slate-300 border rounded-full border-black' />
           </div>
         </div>
         <div className='w-full min-h-0 flex flex-1 overflow-hidden  mt-4'>
