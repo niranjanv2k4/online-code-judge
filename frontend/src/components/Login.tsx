@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useState } from 'react'
-
+import Alert from "./Alert";
 
 function Login(){
 
@@ -8,8 +8,13 @@ function Login(){
 
     const [password, setPassword] = useState("");
     const [username, setUsername] = useState("");
+    const [error, setError] = useState(false);
+    const [errorMessage, setErrorMessage] = useState("");
 
-
+    function  handleError(){
+        setError(false);
+    }
+    
     async function handleLogin(){
         console.log(username)
         console.log(password)
@@ -31,12 +36,17 @@ function Login(){
             localStorage.setItem("token", data.token);
             navigate("/code-editor");
         }else{
-            console.log("INVALID");
+            setErrorMessage("INVALID CREDENTIALS")
+            setError(true);
+            setTimeout(() => {
+                setError(false);
+            }, 3000);
         }
     }
 
     return (
         <div>
+            { error && <Alert handleError={handleError} message={errorMessage}/> }
             <form action="">
                 <input type="text" className="border" placeholder="email/username" onChange={ (e) => setUsername(e.target.value) }/>
                 <input type="password" className="border"placeholder="password" onChange={ (e) => setPassword(e.target.value) }/>

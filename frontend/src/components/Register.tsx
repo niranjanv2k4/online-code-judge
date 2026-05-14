@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useState } from 'react'
-
+import Alert from "./Alert";
 
 function Register(){
 
@@ -8,7 +8,12 @@ function Register(){
 
     const [password, setPassword] = useState("");
     const [username, setUsername] = useState("");
+    const [error, setError] = useState(false);
+    const [errorMessage, setErrorMessage] = useState("");
 
+    function handleError(){
+        setError(false);
+    }
 
     async function handleRegister(){
         console.log(username)
@@ -28,14 +33,19 @@ function Register(){
         const data = await response.json();
 
         if(data.output === "SUCCESS"){
-            localStorage.setItem("token", data.token)
-            navigate("/code-editor")
+            localStorage.setItem("token", data.token);
+            navigate("/code-editor");
         }else 
-            console.log(data.output)
+            setError(true);
+            setErrorMessage(data.output);
+            setTimeout(() => {
+                setError(true)
+            }, 3000);
     }
 
     return (
         <div>
+            { error && <Alert handleError={handleError} message={errorMessage}/> }
             <form action="">
                 <input type="text" className="border" placeholder="email/username" onChange={ (e) => setUsername(e.target.value) }/>
                 <input type="password" className="border"placeholder="password" onChange={ (e) => setPassword(e.target.value) }/>
