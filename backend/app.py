@@ -7,7 +7,13 @@ from services.compiling_service import run_code
 from services.authentication import validate
 from services.authentication import new_user
 
+from dotenv import load_dotenv
+import os
+
 import psycopg2
+
+
+load_dotenv()
 
 app = Flask(__name__)
 
@@ -16,7 +22,7 @@ conn = psycopg2.connect(
     port=5432,
     database="authdb",
     user="postgres",
-    password="secret"
+    password=os.getenv("DB_PASSWORD")
 )
 
 CORS(app)
@@ -42,10 +48,11 @@ def login():
     username = request.json["username"]
     password = request.json["password"]
 
-    output = validate(conn, username, password)
+    output , token = validate(conn, username, password)
 
     return jsonify({
-        "output": output
+        "output": output,
+        "token" : token
     })
 
 @app.route("/register", methods=['POST'])
@@ -53,9 +60,10 @@ def register():
     username = request.json["username"]
     password = request.json["password"]
 
-    output = new_user(conn, username, password)
+    output, token = new_user(conn, username, password)
     return jsonify({
-        "output" : output
+        "output" : output,
+        "token" : token
     })
 
 if __name__ == "__main__":

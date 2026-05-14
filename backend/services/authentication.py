@@ -1,8 +1,11 @@
 import bcrypt
+import jwt
+import os
 
 def validate(conn, username, entered_password):
     cursor = conn.cursor()
     result = ""
+    token = ""
 
     cursor.execute("SELECT password_hash FROM users WHERE username=%s", (username, ))
     
@@ -15,23 +18,25 @@ def validate(conn, username, entered_password):
         
         if bcrypt.checkpw(entered_password.encode(), stored_password.encode()):
             result = "SUCCESS"
+            payload= {
+                "username" : username
+            }
+            token = jwt.encode(payload, os.getenv("SECRET_KEY"), algorithm="HS256")
         else:
             result = "INVALID CREDENTIALS"
 
     cursor.close()
-    return result
+    return result, token
 
 def new_user(conn, username, entered_password):
     cursor = conn.cursor()
-    res = ""
 
     cursor.execute("SELECT password_hash FROM users WHERE username=%s", (username, ))
     password = cursor.fetchone()
 
     if password is not None:
-        res = "USER EXISTS"
         cursor.close()
-        return res
+        return "USER EXISTS", ""
     
     password_hash = bcrypt.hashpw(entered_password.encode(), bcrypt.gensalt())
 
@@ -42,5 +47,6 @@ def new_user(conn, username, entered_password):
     
     conn.commit()
     cursor.close()
-    return "REGISTERED"
+    
+    return validate(conn, username, entered_password)
 

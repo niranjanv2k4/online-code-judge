@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRef } from 'react';
 import ResultPanel from './ResultPanel';
@@ -20,6 +20,13 @@ function CodeArea() {
   
   const lines = code.split("\n").length
   const arr = Array.from({ length: lines }, (_, i) => i + 1);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if(!token){
+      navigate("/login");
+    }
+  }, []);
 
   function handleResize(e : React.MouseEvent<HTMLDivElement>){
     if(dragging){

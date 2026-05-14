@@ -28,9 +28,10 @@ function Login(){
         const data = await response.json();
 
         if(data.output === "SUCCESS"){
-            navigate("/code-editor")
+            localStorage.setItem("token", data.token);
+            navigate("/code-editor");
         }else{
-            console.log("INVALID")
+            console.log("INVALID");
         }
     }
 
