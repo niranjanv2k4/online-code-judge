@@ -16,8 +16,15 @@ function Register(){
     }
 
     async function handleRegister(){
-        console.log(username)
-        console.log(password)
+        
+        if(username.trim() === '' || password.trim() === ''){
+            setErrorMessage("INVALID CREDENTIALS");
+            setError(true);
+            setTimeout(() => {
+                setError(false)
+            }, 3000);
+            return;
+        }
         
         const response = await fetch("http://localhost:5000/register", {
             method: 'POST',
@@ -44,21 +51,53 @@ function Register(){
     }
 
     return (
-        <div>
-            { error && <Alert handleError={handleError} message={errorMessage}/> }
-            <form action="">
-                <input type="text" className="border" placeholder="email/username" onChange={ (e) => setUsername(e.target.value) }/>
-                <input type="password" className="border"placeholder="password" onChange={ (e) => setPassword(e.target.value) }/>
+        <div className="flex flex-col items-center justify-center min-h-screen bg-slate-900 px-4">
+            <div className="relative w-full max-w-md">
 
-                <button
+                {error && (
+                    <div className="absolute -top-24 left-0 right-0 z-50">
+                        <Alert handleError={handleError} message={errorMessage} />
+                    </div>
+                )}
 
-                type="button"
-                className="text-white bg-blue-500 hover:bg-blue-600 focus:ring-4 focus:ring-blue-300 shadow-md font-medium rounded-lg text-sm px-4 py-2.5"
-                onClick={ handleRegister }
-                >
-                    REGISTER
-                </button>
-            </form>
+                <div className="w-full bg-slate-800 rounded-xl p-8 shadow-xl border border-slate-700">
+
+                    <h1 className="text-3xl font-bold text-white text-center mb-8">
+                        Register
+                    </h1>
+
+                    <form action="" className="flex flex-col gap-4">
+
+                        <input
+                            type="text"
+                            className="w-full rounded-lg border border-slate-600 bg-slate-700 px-4 py-3 text-white outline-none focus:border-blue-500"
+                            placeholder="Email / Username"
+                            required
+                            onChange={(e) => setUsername(e.target.value)}
+                        />
+
+                        <input
+                            type="password"
+                            className="w-full rounded-lg border border-slate-600 bg-slate-700 px-4 py-3 text-white outline-none focus:border-blue-500"
+                            placeholder="Password"
+                            required
+                            onChange={(e) => setPassword(e.target.value)}
+                        />
+
+                    </form>
+
+                    <div className="flex gap-4 mt-6">
+                        <button
+                            type="button"
+                            className="flex-1 text-white bg-slate-700 hover:bg-slate-600 font-medium rounded-lg px-4 py-3 transition"
+                            onClick={handleRegister}
+                        >
+                            REGISTER
+                        </button>
+                    </div>
+
+                </div>
+            </div>
         </div>
     )
 }

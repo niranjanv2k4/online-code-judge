@@ -14,10 +14,8 @@ function Login(){
     function  handleError(){
         setError(false);
     }
-    
+
     async function handleLogin(){
-        console.log(username)
-        console.log(password)
         
         const response = await fetch("http://localhost:5000/login", {
             method: 'POST',
@@ -31,6 +29,7 @@ function Login(){
         })
 
         const data = await response.json();
+        console.log(data.output);
 
         if(data.output === "SUCCESS"){
             localStorage.setItem("token", data.token);
@@ -45,29 +44,60 @@ function Login(){
     }
 
     return (
-        <div>
-            { error && <Alert handleError={handleError} message={errorMessage}/> }
-            <form action="">
-                <input type="text" className="border" placeholder="email/username" onChange={ (e) => setUsername(e.target.value) }/>
-                <input type="password" className="border"placeholder="password" onChange={ (e) => setPassword(e.target.value) }/>
+        <div className="flex flex-col items-center justify-center min-h-screen bg-slate-900 px-4">
+            <div className="relative w-full max-w-md">
 
-                <button
+                {error && (
+                    <div className="absolute -top-24 left-0 right-0 z-50">
+                        <Alert handleError={handleError} message={errorMessage} />
+                    </div>
+                )}
 
-                type="button"
-                className="text-white bg-blue-500 hover:bg-blue-600 focus:ring-4 focus:ring-blue-300 shadow-md font-medium rounded-lg text-sm px-4 py-2.5"
-                onClick={ handleLogin }
-                >
-                    LOGIN
-                </button>
-            </form>
-            <button
+                <div className="w-full max-w-md bg-slate-800 rounded-xl p-8 shadow-xl border border-slate-700">
 
-            type="button"
-            className="text-white bg-blue-500 hover:bg-blue-600 focus:ring-4 focus:ring-blue-300 shadow-md font-medium rounded-lg text-sm px-4 py-2.5"
-            onClick={ () => navigate("/register") }
-            >
-                REGISTER
-            </button>
+                    <h1 className="text-3xl font-bold text-white text-center mb-8">
+                        Login
+                    </h1>
+
+                    <form action="" className="flex flex-col gap-4">
+
+                        <input
+                            type="text"
+                            className="w-full rounded-lg border border-slate-600 bg-slate-700 px-4 py-3 text-white outline-none focus:border-blue-500"
+                            placeholder="Email / Username"
+                            onChange={(e) => setUsername(e.target.value)}
+                        />
+
+                        <input
+                            type="password"
+                            className="w-full rounded-lg border border-slate-600 bg-slate-700 px-4 py-3 text-white outline-none focus:border-blue-500"
+                            placeholder="Password"
+                            onChange={(e) => setPassword(e.target.value)}
+                        />
+
+                    </form>
+
+                    <div className="flex gap-4 mt-6">
+
+                        <button
+                            type="button"
+                            className="flex-1 text-white bg-blue-500 hover:bg-blue-600 font-medium rounded-lg px-4 py-3 transition"
+                            onClick={handleLogin}
+                        >
+                            LOGIN
+                        </button>
+
+                        <button
+                            type="button"
+                            className="flex-1 text-white bg-slate-700 hover:bg-slate-600 font-medium rounded-lg px-4 py-3 transition"
+                            onClick={() => navigate("/register")}
+                        >
+                            REGISTER
+                        </button>
+
+                    </div>
+                </div>
+            </div>
         </div>
     )
 }
