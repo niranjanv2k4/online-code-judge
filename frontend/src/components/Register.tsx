@@ -42,12 +42,13 @@ function Register(){
         if(data.output === "SUCCESS"){
             localStorage.setItem("token", data.token);
             navigate("/code-editor");
-        }else 
+        }else {
             setError(true);
             setErrorMessage(data.output);
             setTimeout(() => {
                 setError(true)
             }, 3000);
+        }
     }
 
     return (

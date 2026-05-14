@@ -3,6 +3,10 @@ import jwt
 import os
 
 def validate(conn, username, entered_password):
+
+    if username.strip() == "" or entered_password.strip() == "":
+        return "INVALID CREDENTIALS", ""
+
     cursor = conn.cursor()
     result = ""
     token = ""
@@ -29,6 +33,10 @@ def validate(conn, username, entered_password):
     return result, token
 
 def new_user(conn, username, entered_password):
+
+    if username.strip() == "" or entered_password.strip() == "":
+        return "INVALID CREDENTIALS", ""
+    
     cursor = conn.cursor()
 
     cursor.execute("SELECT password_hash FROM users WHERE username=%s", (username, ))
