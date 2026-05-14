@@ -1,4 +1,4 @@
-import CodeArea from "./components/CodeArea";
+import CodeArea from "./components/MainPage";
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Login from "./components/Login"
 import Register from "./components/Register"

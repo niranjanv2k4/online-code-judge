@@ -1,95 +1,58 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useRef } from 'react';
-import ResultPanel from './ResultPanel';
-import { User, CodeXml } from 'lucide-react';
+import { useNavigate } from "react-router-dom";
+import { CodeXml, User } from "lucide-react";
+import { useState, useRef } from "react";
 
 
-function CodeArea() {
-  const navigate = useNavigate();
+type Props = {
+    code: string
+    language: string
+    handleReset: () => void
+    setCode: (value: string) => void
+    setLanguage: (value: string) => void
+}
 
-  const textAreaRef = useRef<HTMLTextAreaElement>(null);
-  const lineRef = useRef<HTMLDivElement>(null);
-  const widthRef = useRef<HTMLDivElement>(null);
+function CodeArea({ code, language, handleReset, setCode, setLanguage } : Props){
 
-  const [code, setCode] = useState("");
-  const [width, setWidth] = useState(30);
-  const [dragging, setDragging] = useState(false);
-  const [language, setLanguage] = useState("C");
-  const [isOpen, setIsOpen] = useState(false);
-  
-  const lines = code.split("\n").length
-  const arr = Array.from({ length: lines }, (_, i) => i + 1);
+    const navigate = useNavigate();
 
-  useEffect(() => {
-    async function verify_token() {
-      const token = localStorage.getItem("token");
+    const lineRef = useRef<HTMLDivElement>(null);
+    const textAreaRef = useRef<HTMLTextAreaElement>(null);
 
-      if(!token)
-        navigate("/login");
-      
-      const response = await fetch("http://localhost:5000/verify_token", {
-        method: 'POST',
-        headers: {
-          "Content-type" : "application/json"
-        },
-        body: JSON.stringify({
-          token: localStorage.getItem("token")
-        })
-      })
-      
-      const data = await response.json();
-      
-      if(!data.valid)
-        navigate("/login");
-    }
+    const [isOpen, setIsOpen] = useState(false);
 
-    verify_token();
-  }, []);
+    const lines = code.split("\n").length
+    const arr = Array.from({ length: lines }, (_, i) => i + 1);
 
-  function handleResize(e : React.MouseEvent<HTMLDivElement>){
-    if(dragging){
-      var pos = e.clientX;
-      var percentage = (pos / widthRef.current.clientWidth) * 100;
-      setWidth(100 - percentage)
-    }
-  }
-  function handleLogOut () {
-    localStorage.removeItem("token")
-    navigate("/login")
-  }
 
-  function handleScroll(e: React.UIEvent<HTMLTextAreaElement>){
-    if (lineRef.current) {
-      lineRef.current.scrollTop = e.currentTarget.scrollTop;
-    }
-  }
-
-  function handleReset(){
-    setCode("");
-  }
-
-  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>){
-    if(e.key === "Tab"){
-      e.preventDefault()
-      const start = e.currentTarget.selectionStart;
-      const end = e.currentTarget.selectionEnd;
-
-      setCode(code.slice(0, start) + "\t" + code.slice(end))
-
-      setTimeout(() => {
-        if (textAreaRef.current) {
-          textAreaRef.current.selectionStart = start + 1;
-          textAreaRef.current.selectionEnd = start + 1;
+    function handleScroll(e: React.UIEvent<HTMLTextAreaElement>){
+        if (lineRef.current) {
+            lineRef.current.scrollTop = e.currentTarget.scrollTop;
         }
-      }, 0);
     }
-  }
 
-  return (
+    function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>){
+        if(e.key === "Tab"){
+            e.preventDefault()
+            const start = e.currentTarget.selectionStart;
+            const end = e.currentTarget.selectionEnd;
 
-    <div className='flex bg-slate-900 h-screen' ref={widthRef} onMouseMove={handleResize}  onMouseUp={() => setDragging(false)}>
-      <div className="transition-all duration-700 flex flex-col p-4 h-full flex-1 box-border overflow-hidden">
+            setCode(code.slice(0, start) + "\t" + code.slice(end))
+
+            setTimeout(() => {
+            if (textAreaRef.current) {
+                textAreaRef.current.selectionStart = start + 1;
+                textAreaRef.current.selectionEnd = start + 1;
+            }
+            }, 0);
+        }
+    }
+    function handleLogOut () {
+        localStorage.removeItem("token");
+        navigate("/login");
+    }
+
+    return (
+        <div className="transition-all duration-700 flex flex-col p-4 h-full flex-1 box-border overflow-hidden">
         <div className='flex items-center w-full border-b border-slate-800 h-16'>
           <div className="flex items-center justify-between px-4 py-3">
 
@@ -190,15 +153,7 @@ function CodeArea() {
         </div>
 
       </div>
-      <div className='flex flex-col text-white justify-center w-1
-        bg-slate-700
-        hover:bg-indigo-500
-        cursor-col-resize
-        transition-colors' onMouseDown={ () => setDragging(true)}>
-      </div>
-      <ResultPanel code={code} width={width} language={language}/>
-    </div>
-  )
+    )
 }
 
 export default CodeArea
