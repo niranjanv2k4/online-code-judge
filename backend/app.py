@@ -11,14 +11,17 @@ from services.authentication import validate_token
 from dotenv import load_dotenv
 import os
 
-import psycopg2
+import psycopg2 
+from psycopg2 import pool
 
 
 load_dotenv()
 
 app = Flask(__name__)
 
-conn = psycopg2.connect(
+db_pool = pool.SimpleConnectionPool(
+    1,              #minimum 1 connection
+    10,             #maximum 10 connections
     host="localhost",
     port=5432,
     database="authdb",
@@ -57,7 +60,7 @@ def login():
     username = request.json["username"]
     password = request.json["password"]
 
-    output , token = validate(conn, username, password)
+    output , token = validate(db_pool, username, password)
 
     return jsonify({
         "output": output,
@@ -69,7 +72,7 @@ def register():
     username = request.json["username"]
     password = request.json["password"]
 
-    output, token = new_user(conn, username, password)
+    output, token = new_user(db_pool, username, password)
     return jsonify({
         "output" : output,
         "token" : token

@@ -2,10 +2,12 @@ import bcrypt
 import jwt
 import os
 
-def validate(conn, username, entered_password):
+def validate(db_pool, username, entered_password):
 
     if username.strip() == "" or entered_password.strip() == "":
         return "INVALID CREDENTIALS", ""
+
+    conn = db_pool.getconn()
 
     cursor = conn.cursor()
     result = ""
@@ -30,13 +32,15 @@ def validate(conn, username, entered_password):
             result = "INVALID CREDENTIALS"
 
     cursor.close()
+    db_pool.putconn(conn)
     return result, token
 
-def new_user(conn, username, entered_password):
+def new_user(db_pool, username, entered_password):
 
     if username.strip() == "" or entered_password.strip() == "":
         return "INVALID CREDENTIALS", ""
     
+    conn = db_pool.getconn()
     cursor = conn.cursor()
 
     cursor.execute("SELECT password_hash FROM users WHERE username=%s", (username, ))
@@ -44,6 +48,7 @@ def new_user(conn, username, entered_password):
 
     if password is not None:
         cursor.close()
+        db_pool.putconn(conn)
         return "USER EXISTS", ""
     
     password_hash = bcrypt.hashpw(entered_password.encode(), bcrypt.gensalt())
@@ -55,8 +60,9 @@ def new_user(conn, username, entered_password):
     
     conn.commit()
     cursor.close()
+    db_pool.putconn(conn)
     
-    return validate(conn, username, entered_password)
+    return validate(db_pool, username, entered_password)
 
 def validate_token(token):
     try:
