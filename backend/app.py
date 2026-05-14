@@ -6,6 +6,7 @@ from services.compiling_service import process_code
 from services.compiling_service import run_code
 from services.authentication import validate
 from services.authentication import new_user
+from services.authentication import validate_token
 
 from dotenv import load_dotenv
 import os
@@ -34,7 +35,15 @@ def recieve_code():
     language = request.json["language"]
     input = request.json['input']
     expected = request.json['expected']
+    token = request.json['token']
 
+    if validate_token(token) == False:
+        return jsonify({
+            "exit_code": 1,
+            "status" : "REQUEST FAILED",
+            "output" : "",
+        })
+    
     exit_code, status, output = process_code(code, language, input, expected)
 
     return jsonify({
@@ -65,6 +74,20 @@ def register():
         "output" : output,
         "token" : token
     })
+
+@app.route("/verify_token", methods=['POST'])
+def check_token():
+    token = request.json['token']
+
+    if validate_token(token) == False:
+        return jsonify({
+            "valid": False
+        })
+    return jsonify({
+        "valid": True
+    })
+    
+
 
 if __name__ == "__main__":
     app.run(debug=True)

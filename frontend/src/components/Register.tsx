@@ -27,9 +27,10 @@ function Register(){
 
         const data = await response.json();
 
-        if(data.output === "REGISTERED")
+        if(data.output === "SUCCESS"){
+            localStorage.setItem("token", data.token)
             navigate("/code-editor")
-        else 
+        }else 
             console.log(data.output)
     }
 

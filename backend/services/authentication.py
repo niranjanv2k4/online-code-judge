@@ -50,3 +50,10 @@ def new_user(conn, username, entered_password):
     
     return validate(conn, username, entered_password)
 
+def validate_token(token):
+    try:
+        jwt.decode(token, os.getenv("SECRET_KEY"), algorithms=["HS256"])
+        return True
+    except:
+        return False
+

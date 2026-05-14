@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRef } from 'react';
 import ResultPanel from './ResultPanel';
-import { Code, CodeXml, SquareCode, Terminal, FileCode } from 'lucide-react';
+import { Code, CodeXml, SquareCode, Terminal, FileCode, ArrowDownAZ } from 'lucide-react';
 
 
 function CodeArea() {
@@ -22,10 +22,29 @@ function CodeArea() {
   const arr = Array.from({ length: lines }, (_, i) => i + 1);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if(!token){
-      navigate("/login");
+    async function verify_token() {
+      const token = localStorage.getItem("token");
+
+      if(!token)
+        navigate("/login");
+      
+      const response = await fetch("http://localhost:5000/verify_token", {
+        method: 'POST',
+        headers: {
+          "Content-type" : "application/json"
+        },
+        body: JSON.stringify({
+          token: localStorage.getItem("token")
+        })
+      })
+      
+      const data = await response.json();
+      
+      if(!data.valid)
+        navigate("/login");
     }
+
+    verify_token();
   }, []);
 
   function handleResize(e : React.MouseEvent<HTMLDivElement>){

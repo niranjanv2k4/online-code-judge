@@ -37,6 +37,7 @@ function ResultPanel({ code, width, language } : Props){
                 language: language,
                 input: input,
                 expected: expected,
+                token: localStorage.getItem("token")
             })
         })
 
