@@ -26,7 +26,7 @@ An online code judge with Docker-based sandboxed execution. Users can register, 
 │           └── Dockerfile            # Dockerfile for the code runner sandbox
 ├── frontend/
 │   ├── src/
-│   │   ├── App.tsx                   # Routes: /login, /register, /code-editor
+│   │   ├── App.tsx                   # Routes: /login, /register, /
 │   │   └── components/
 │   │       ├── Login.tsx
 │   │       ├── Register.tsx

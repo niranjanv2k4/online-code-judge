@@ -33,7 +33,7 @@ function Login(){
 
         if(data.output === "SUCCESS"){
             localStorage.setItem("token", data.token);
-            navigate("/code-editor");
+            navigate("/");
         }else{
             setErrorMessage("INVALID CREDENTIALS")
             setError(true);

@@ -10,7 +10,7 @@ function App(){
       <Routes>
         <Route path="/login" element={<Login />}/>
         <Route path="/register" element={<Register />}/>
-        <Route path="/code-editor" element={<CodeArea />} />
+        <Route path="/" element={<CodeArea />} />
       </Routes>
       </BrowserRouter>
     </div>

@@ -41,7 +41,7 @@ function Register(){
 
         if(data.output === "SUCCESS"){
             localStorage.setItem("token", data.token);
-            navigate("/code-editor");
+            navigate("/");
         }else {
             setError(true);
             setErrorMessage(data.output);
