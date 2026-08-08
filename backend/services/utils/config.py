@@ -12,3 +12,9 @@ EXECUTORS = {
         "compiler": "g++"
     },
 }
+
+class Result:
+    def __init__(self):
+        self.exit_code = 0
+        self.status = ""
+        self.output = ""

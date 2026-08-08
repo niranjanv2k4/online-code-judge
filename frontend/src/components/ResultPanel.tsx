@@ -42,16 +42,35 @@ function ResultPanel({ code, width, language } : Props){
         })
 
         const data = await response.json();
-        console.log(data)
-        if(data.status !== "SUCCESS"){
-            setError(data.output)
-            setOutput(data.output.trim())
-        }else{
-            setError(null)
-            setOutput(data.output.trim())
+
+        const job_id = data.job_id;
+        
+        async function poll_result(job_id: string){
+            const res = await fetch(`http://localhost:5000/get_result`, {
+                method: 'POST',
+                headers: {
+                    "Content-type" : "application/json"
+                },
+                body: JSON.stringify({
+                    job_id: job_id,
+                    token: localStorage.getItem("token")
+                })
+            })
+
+            const result = await res.json();
+
+            if(result.status === "PENDING"){
+                setTimeout(async () => {
+                    poll_result(job_id)
+                }, 500)
+            }else{
+                setStatus("executed");
+                setOutput(result.output);
+                setError(result.exit_code !== 0 ? result.output : null);
+            }
         }
 
-        setStatus("executed")
+        poll_result(job_id);
 
     }
 
