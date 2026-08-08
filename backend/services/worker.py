@@ -116,7 +116,7 @@ def worker_loop():
         }
         
 
-        r.set(f"result:{job['id']}", json.dumps(result))
+        r.set(f"result:{job['id']}", json.dumps(result), ex=300)
 
 
 def run_code(input, expected, container, final_result):

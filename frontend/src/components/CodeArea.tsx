@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { CodeXml, User } from "lucide-react";
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { Editor } from "@monaco-editor/react";
 
 
@@ -16,13 +16,7 @@ function CodeArea({ code, language, handleReset, setCode, setLanguage } : Props)
 
     const navigate = useNavigate();
 
-    const lineRef = useRef<HTMLDivElement>(null);
-    const textAreaRef = useRef<HTMLTextAreaElement>(null);
-
     const [isOpen, setIsOpen] = useState(false);
-
-    const lines = code.split("\n").length
-    const arr = Array.from({ length: lines }, (_, i) => i + 1);
 
     const handleEditorWillMount = (monaco) => {
       monaco.editor.defineTheme("online-judge", {
@@ -57,39 +51,11 @@ function CodeArea({ code, language, handleReset, setCode, setLanguage } : Props)
   };
 
     const handleEditorMount = (editor) => {
-        editor.onDidScrollChange((e) => {
-            if (e.scrollTopChanged && lineRef.current) {
-                lineRef.current.scrollTop = e.scrollTop;
-            }
-        });
-
         editor.onDidFocusEditorText(() => {
             setIsOpen(false);
         });
     };
-    
-    function handleScroll(e: React.UIEvent<HTMLTextAreaElement>){
-        if (lineRef.current) {
-            lineRef.current.scrollTop = e.currentTarget.scrollTop;
-        }
-    }
 
-    function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>){
-        if(e.key === "Tab"){
-            e.preventDefault()
-            const start = e.currentTarget.selectionStart;
-            const end = e.currentTarget.selectionEnd;
-
-            setCode(code.slice(0, start) + "\t" + code.slice(end))
-
-            setTimeout(() => {
-            if (textAreaRef.current) {
-                textAreaRef.current.selectionStart = start + 1;
-                textAreaRef.current.selectionEnd = start + 1;
-            }
-            }, 0);
-        }
-    }
     function handleLogOut () {
         localStorage.removeItem("token");
         navigate("/login");
@@ -172,16 +138,8 @@ function CodeArea({ code, language, handleReset, setCode, setLanguage } : Props)
           </div>
         </div>
         <div className='w-full min-h-0 flex flex-1 overflow-hidden  mt-4'>
-          <div 
-            className='text-white w-[2%] overflow-hidden bg-slate-700 border border-gray-400 rounded-l-md flex p-3 items-center flex-col'
-            ref={lineRef}
-            > 
-            {arr.map((value) => (
-              <div className='text-xs font-semibold leading-6'>{value}</div>
-            ))} 
-          </div>
           <form id="codeForm" className='w-full h-full flex'>
-            <div className="flex-1 w-full h-full bg-slate-700 border border-gray-400 rounded-r-md overflow-hidden z--100">
+            <div className="flex-1 w-full h-full bg-slate-700 border border-gray-400 rounded-md overflow-hidden">
               <Editor
                 height="100%"
                 theme="online-judge" // Beautiful dark mode built-in!
@@ -194,7 +152,10 @@ function CodeArea({ code, language, handleReset, setCode, setLanguage } : Props)
                   fontSize: 14,
                   lineHeight: 24,
                   padding: { top: 12, bottom: 0},
-                  lineNumbers: "off",
+                  lineNumbers: "on",
+                  lineNumbersMinChars: 3,
+                  glyphMargin: false,
+                  folding: false,
                   minimap: { enabled: false},
                   scrollBeyondLastLine: false,
                 }}
