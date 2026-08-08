@@ -99,7 +99,7 @@ function CodeArea({ code, language, handleReset, setCode, setLanguage } : Props)
                   C
                 </button>
 
-                <button className="w-full px-4 py-2 text-left text-sm text-slate-300 hover:bg-slate-700" onClick={() => {setIsOpen(false); setLanguage("C++")}}>
+                <button className="w-full px-4 py-2 text-left text-sm text-slate-300 hover:bg-slate-700" onClick={() => {setIsOpen(false); setLanguage("CPP")}}>
                   C++
                 </button>
               </div>}

@@ -1,3 +1,5 @@
+from os import path
+from docker import client
 import io, tarfile, docker
 import docker.errors
 import docker.models
@@ -5,6 +7,8 @@ import docker.models.containers
 import time
 import threading
 import socket
+
+from services.utils.config import EXECUTORS
 
 class Result:
     def __init__(self):
@@ -21,40 +25,40 @@ def strip_docker_headers(raw: bytes) -> bytes:
         raw = raw[8 + size:]
     return output
 
-def start_container() -> docker.models.containers.Container:
+def start_container(language: str) -> docker.models.containers.Container:
+    
     client = docker.from_env()
+    config = EXECUTORS.get(language)
+
+    image, build_path = config['image'], config['build_path']
 
     try:
-        cont = client.containers.run("code_runner_image", command="sleep 1000", detach=True, pids_limit=16, mem_limit="200m", read_only=True, tmpfs={
-            "/home/sandbox/workdir/" : 'size=16m,uid=1000,gid=1000,exec'
-        }, network_disabled=True, cap_drop=["ALL"], security_opt=["no-new-privileges:true"])
+        img = client.images.get(image)
+    except:
+        img = client.images.build(path=build_path, tag=image)
 
-    except docker.errors.ImageNotFound:
-        client.images.build(path="./", tag="code_runner_image")
-        cont = client.containers.run("code_runner_image", command="sleep 1000", detach=True, pids_limit=16, mem_limit="200m", read_only=True, tmpfs={
-            "/home/sandbox/workdir/" : 'size=16m,uid=1000,gid=1000,exec'
-        }, network_disabled=True, cap_drop=["ALL"], security_opt=["no-new-privileges:true"])
+    cont = client.containers.run(image, command="sleep 1000", detach=True, pids_limit=16, mem_limit="200m", read_only=True, tmpfs={
+        "/home/sandbox/workdir/" : 'size=16m,uid=1000,gid=1000,exec'
+    }, network_disabled=True, cap_drop=["ALL"], security_opt=["no-new-privileges:true"])
 
     return cont
 
 def process_code(code, language, input, expected):
 
     final_result = Result()
+    language = language.lower()
+
+    cont = start_container(language)
+    config = EXECUTORS.get(language)
 
     try: 
-        cont = start_container()
-        if language == "C":
-            res = cont.exec_run("sh -c 'cat > /home/sandbox/workdir/main.c'", socket=True, stdin=True)
-        else:
-            res = cont.exec_run("sh -c 'cat > /home/sandbox/workdir/main.cpp'", socket=True, stdin=True)
+
+        res = cont.exec_run(f"sh -c 'cat > /home/sandbox/workdir/{config['filename']}'", socket=True, stdin=True)
+        
         res.output._sock.sendall(code.encode())
         res.output._sock.close()
-        
-        if language == "C":
-            compilation_result = cont.exec_run(cmd=["gcc", "main.c", "-o", "main"], workdir="/home/sandbox/workdir")
-        else:
-            compilation_result = cont.exec_run(cmd=["g++", "main.cpp", "-o", "main"], workdir="/home/sandbox/workdir")
 
+        compilation_result = cont.exec_run(cmd=[config['compiler'], config['filename'], "-o", "main"], workdir="/home/sandbox/workdir")
 
         if compilation_result.exit_code == 0:
             run_code(input, expected, cont, final_result)
@@ -66,7 +70,7 @@ def process_code(code, language, input, expected):
     except docker.errors.DockerException:
         final_result.exit_code = 1
         final_result.status = "FAILURE"
-        final_result.output = "TRY RUNNING ARAIN"
+        final_result.output = "TRY RUNNING AGAIN"
 
     finally:
         cont.remove(force=True)
