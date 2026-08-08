@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { CodeXml, User } from "lucide-react";
 import { useState, useRef } from "react";
+import { Editor } from "@monaco-editor/react";
 
 
 type Props = {
@@ -23,7 +24,50 @@ function CodeArea({ code, language, handleReset, setCode, setLanguage } : Props)
     const lines = code.split("\n").length
     const arr = Array.from({ length: lines }, (_, i) => i + 1);
 
+    const handleEditorWillMount = (monaco) => {
+      monaco.editor.defineTheme("online-judge", {
+          base: "vs-dark",
+          inherit: true,
 
+          rules: [
+              { token: "comment", foreground: "64748B", fontStyle: "italic" },
+              { token: "keyword", foreground: "C084FC" },
+              { token: "string", foreground: "86EFAC" },
+              { token: "number", foreground: "FBBF24" },
+              { token: "type", foreground: "67E8F9" },
+              { token: "function", foreground: "A5B4FC" },
+              { token: "operator", foreground: "E879F9" }
+          ],
+
+          colors: {
+              "editor.background": "#334155",
+              "editor.foreground": "#E5E7EB",
+              "editorLineNumber.foreground": "#475569",
+              "editorLineNumber.activeForeground": "#A78BFA",
+              "editorCursor.foreground": "#8B5CF6",
+              "editor.selectionBackground": "#4F46E555",
+              "editor.lineHighlightBackground": "#1E293B",
+              "editorIndentGuide.background": "#1E293B",
+              "editorIndentGuide.activeBackground": "#334155",
+              "scrollbarSlider.background": "#47556966",
+              "scrollbarSlider.hoverBackground": "#64748B88",
+              "scrollbarSlider.activeBackground": "#8B5CF6AA"
+          }
+      });
+  };
+
+    const handleEditorMount = (editor) => {
+        editor.onDidScrollChange((e) => {
+            if (e.scrollTopChanged && lineRef.current) {
+                lineRef.current.scrollTop = e.scrollTop;
+            }
+        });
+
+        editor.onDidFocusEditorText(() => {
+            setIsOpen(false);
+        });
+    };
+    
     function handleScroll(e: React.UIEvent<HTMLTextAreaElement>){
         if (lineRef.current) {
             lineRef.current.scrollTop = e.currentTarget.scrollTop;
@@ -93,7 +137,7 @@ function CodeArea({ code, language, handleReset, setCode, setLanguage } : Props)
 
               {/* Dropdown */}
               {isOpen && 
-                <div className="absolute right-0 mt-2 w-56 overflow-hidden rounded-lg bg-slate-800 shadow-xl ring-1 ring-slate-700">
+                <div className="absolute right-0 mt-2 w-56 overflow-hidden rounded-lg bg-slate-800 shadow-xl ring-1 ring-slate-700 z-1000">
 
                 <button className="w-full px-4 py-2 text-left text-sm text-slate-300 hover:bg-slate-700" onClick={() => {setIsOpen(false); setLanguage("C")}}>
                   C
@@ -129,7 +173,7 @@ function CodeArea({ code, language, handleReset, setCode, setLanguage } : Props)
         </div>
         <div className='w-full min-h-0 flex flex-1 overflow-hidden  mt-4'>
           <div 
-            className='text-white w-[2%] overflow-hidden bg-slate-700 border border-gray-400 rounded-l-md flex items-center p-3 flex-col'
+            className='text-white w-[2%] overflow-hidden bg-slate-700 border border-gray-400 rounded-l-md flex p-3 items-center flex-col'
             ref={lineRef}
             > 
             {arr.map((value) => (
@@ -137,18 +181,25 @@ function CodeArea({ code, language, handleReset, setCode, setLanguage } : Props)
             ))} 
           </div>
           <form id="codeForm" className='w-full h-full flex'>
-            <textarea 
-              id="message" 
-              name="code"
-              rows={4}
-              className="flex-1 bg-slate-700 border border-gray-400 text-white rounded-r-md w-full p-3 focus:outline-none focus:ring-0 leading-6"
-              placeholder="Code here..."
-              onChange={ (e) => setCode(e.target.value) }
-              onKeyDown={ handleKeyDown }
-              onScroll={ handleScroll }
-              value={code}
-              ref={textAreaRef}>
-            </textarea>
+            <div className="flex-1 w-full h-full bg-slate-700 border border-gray-400 rounded-r-md overflow-hidden z--100">
+              <Editor
+                height="100%"
+                theme="online-judge" // Beautiful dark mode built-in!
+                beforeMount={handleEditorWillMount}
+                onMount={handleEditorMount}
+                language={language === "CPP" ? "cpp" : "c"}
+                value={code}
+                onChange={(value) => setCode(value || "")}
+                options={{
+                  fontSize: 14,
+                  lineHeight: 24,
+                  padding: { top: 12, bottom: 0},
+                  lineNumbers: "off",
+                  minimap: { enabled: false},
+                  scrollBeyondLastLine: false,
+                }}
+              />
+            </div>
           </form>
         </div>
 
