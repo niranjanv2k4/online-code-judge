@@ -75,7 +75,7 @@ function ResultPanel({ code, width, language } : Props){
     }
 
     return (
-        <div className={`h-full flex flex-col overflow-hidden p-4`} style={{ width: `${width}%`,minWidth: "300px",maxWidth: "50%" }}>
+        <div className={`h-full flex flex-col overflow-hidden p-4`} style={{ width: `${width}px`,minWidth: "280px",maxWidth: "50%" }}>
             <div className="flex items-center border-b border-slate-800 h-16">
                 <label
                 htmlFor="message"

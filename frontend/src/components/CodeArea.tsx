@@ -10,9 +10,11 @@ type Props = {
     handleReset: () => void
     setCode: (value: string) => void
     setLanguage: (value: string) => void
+    setAIAssit: (value: boolean) => void
+    AIAssit: boolean
 }
 
-function CodeArea({ code, language, handleReset, setCode, setLanguage } : Props){
+function CodeArea({ code, language, handleReset, setCode, setLanguage, setAIAssit, AIAssit } : Props){
 
     const navigate = useNavigate();
 
@@ -118,6 +120,14 @@ function CodeArea({ code, language, handleReset, setCode, setLanguage } : Props)
             </div>
           </div>
           <div className='gap-4 flex ml-auto'>
+            <button
+              type="button"
+              className="w-28 text-white bg-indigo-600 hover:bg-blue-600 shadow-md font-medium rounded-lg text-sm px-4 py-2.5"
+              onClick={ () => setAIAssit(!AIAssit) }
+              >
+              ✨ AI Assit
+            </button>
+            
             <button
               type="button"
               className="w-28 text-white bg-indigo-600 hover:bg-blue-600 shadow-md font-medium rounded-lg text-sm px-4 py-2.5"
