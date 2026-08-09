@@ -1,20 +1,23 @@
 import { useState } from "react";
+import { Loader2 } from "lucide-react"
 
 type Props = {
     showAI: boolean;
     aiWidth: number;
     isDragging: boolean;
     language: string;
+    setCode: (value: string) => void
 };
 
-function AIAssit({ showAI, aiWidth, isDragging, language }: Props) {
+function AIAssit({ showAI, aiWidth, isDragging, language, setCode }: Props) {
 
     const [prompt, setPrompt] = useState("");
     const [messages, setMessages] = useState([{role: "ai", content: "Hi! I'm your AI coding assistant. Describe what you want and I'll generate the code for you."}])
-
+    const [isGenerating, setIsGenerating] = useState(false);
     async function handlePromptSubmit(){
         
-        const response = await fetch("http://localhost:5000/generate_code", {
+        setIsGenerating(true);
+        const res = await fetch("http://localhost:5000/generate_code", {
             method: "POST",
             headers: {
                 "Content-type" : "application/json"
@@ -32,12 +35,20 @@ function AIAssit({ showAI, aiWidth, isDragging, language }: Props) {
         }]);
         setPrompt("");
 
-        const data = await response.json();
-        
+        const data = await res.json();
+        console.log(data);
+
+        const code = data.code;
+        const AIresponse = data.response;
+
+        setCode(code)
+
         setMessages(prev => [...prev, {
             role: "ai",
-            content: data.response
+            content: AIresponse
         }]);
+
+        setIsGenerating(false);
 
     }
 
@@ -114,8 +125,13 @@ function AIAssit({ showAI, aiWidth, isDragging, language }: Props) {
                         justify-center
                     "
                     onClick={handlePromptSubmit}
+                    disabled={isGenerating}
                 >
-                    ➤
+                    {isGenerating ? (
+                        <Loader2 className="animate-spin" size={16} />
+                    ) : (
+                        "➤"
+                    )}
                 </button>
             </div>
         </div>

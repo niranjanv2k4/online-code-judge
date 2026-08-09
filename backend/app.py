@@ -115,12 +115,11 @@ def get_result():
 @app.route("/generate_code", methods=['POST'])
 def generate_code():
     prompt = request.json['prompt']
+    language = request.json['language']
     
-    response = llm_service.process_prompt(prompt)
+    response = llm_service.process_prompt(prompt, language)
 
-    return jsonify({
-        "response" : response
-    })
+    return jsonify(response)
 
 if __name__ == "__main__":
     app.run(debug=True)
