@@ -18,7 +18,7 @@ function MainPage() {
   const [showAI, setAIAssit] = useState(false);
 
   const [aiWidth, setAIWidth] = useState(300);
-  const [dragginai, setDraggingAI] = useState(false);
+  const [dragginai, setDraggingAI] = useState(true);
 
   useEffect(() => {
     async function verify_token() {
