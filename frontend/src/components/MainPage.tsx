@@ -88,7 +88,7 @@ function MainPage() {
         onMouseDown={ () => setDraggingAI(true) }
       />
 
-      <AIAssit showAI={showAI} aiWidth={aiWidth} isDragging={dragginai}/>
+      <AIAssit showAI={showAI} aiWidth={aiWidth} isDragging={dragginai} language={language}/>
 
       <div
         className="

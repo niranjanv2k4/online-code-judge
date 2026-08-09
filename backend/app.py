@@ -1,3 +1,4 @@
+from werkzeug.sansio import response
 from docker.utils import json_stream
 from flask import Flask
 from flask import request, jsonify
@@ -8,6 +9,8 @@ from services.authentication import validate
 from services.authentication import new_user
 from services.authentication import validate_token
 from services.redis_client import r
+from services.utils import llm_service
+
 from dotenv import load_dotenv
 import os, json
 
@@ -107,6 +110,16 @@ def get_result():
         "exit_code" : result['exit_code'],
         "status" : result['status'],
         "output" : result['output']
+    })
+
+@app.route("/generate_code", methods=['POST'])
+def generate_code():
+    prompt = request.json['prompt']
+    
+    response = llm_service.process_prompt(prompt)
+
+    return jsonify({
+        "response" : response
     })
 
 if __name__ == "__main__":

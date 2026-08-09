@@ -1,10 +1,46 @@
+import { useState } from "react";
+
 type Props = {
     showAI: boolean;
     aiWidth: number;
     isDragging: boolean;
+    language: string;
 };
 
-function AIAssit({ showAI, aiWidth, isDragging }: Props) {
+function AIAssit({ showAI, aiWidth, isDragging, language }: Props) {
+
+    const [prompt, setPrompt] = useState("");
+    const [messages, setMessages] = useState([{role: "ai", content: "Hi! I'm your AI coding assistant. Describe what you want and I'll generate the code for you."}])
+
+    async function handlePromptSubmit(){
+        
+        const response = await fetch("http://localhost:5000/generate_code", {
+            method: "POST",
+            headers: {
+                "Content-type" : "application/json"
+            },
+            body: JSON.stringify({
+                prompt: prompt,
+                language: language,
+                token: localStorage.getItem("token")
+            })
+        })
+        
+        setMessages(prev => [...prev, {
+            role : "user",
+            content: prompt
+        }]);
+        setPrompt("");
+
+        const data = await response.json();
+        
+        setMessages(prev => [...prev, {
+            role: "ai",
+            content: data.response
+        }]);
+
+    }
+
     return (
         <div
             className={`
@@ -28,9 +64,19 @@ function AIAssit({ showAI, aiWidth, isDragging }: Props) {
             </div>
 
             <div className="flex-1 overflow-y-auto py-3 flex flex-col gap-3">
-                <div className="max-w-[95%] rounded-[10px] bg-slate-800 border border-slate-700 px-3 py-2.5 text-[13px] leading-[1.5] text-slate-300">
-                    Hi! I'm your AI coding assistant. Describe what you want and I'll generate the code for you.
-                </div>
+                    {messages.map((message, index) => (
+                        <div 
+                            key={index}
+                            className={`
+                                max-w-[95%] rounded-[10px] px-3 py-2.5 text-[13px] leading-[1.5]
+                                ${message.role === "user" ? 
+                                    "self-end bg-indigo-600 text-white" : 
+                                    "self-start bg-slate-800 border border-slate-700 text-slate-300"
+                                }
+                                `}
+                            >{message.content}
+                        </div>
+                    ))}
             </div>
 
             <div className="flex gap-2 h-10">
@@ -50,6 +96,8 @@ function AIAssit({ showAI, aiWidth, isDragging }: Props) {
                         focus:border-indigo-500
                     "
                     placeholder="Describe what you want..."
+                    onChange={ (e) => setPrompt(e.target.value)}
+                    value={prompt}
                 />
 
                 <button
@@ -65,6 +113,7 @@ function AIAssit({ showAI, aiWidth, isDragging }: Props) {
                         items-center
                         justify-center
                     "
+                    onClick={handlePromptSubmit}
                 >
                     ➤
                 </button>
