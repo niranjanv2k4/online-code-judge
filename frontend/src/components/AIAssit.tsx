@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Loader2 } from "lucide-react"
+import { useRef, useEffect } from "react";
 
 type Props = {
     showAI: boolean;
@@ -12,8 +13,26 @@ type Props = {
 function AIAssit({ showAI, aiWidth, isDragging, language, setCode }: Props) {
 
     const [prompt, setPrompt] = useState("");
-    const [messages, setMessages] = useState([{role: "ai", content: "Hi! I'm your AI coding assistant. Describe what you want and I'll generate the code for you."}])
+    const [messages, setMessages] = useState([
+        {
+            role: "ai", 
+            content: "Hi! I'm your AI coding assistant. Describe what you want and I'll generate the code for you.",
+            code: ""
+        }]);
+
     const [isGenerating, setIsGenerating] = useState(false);
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({
+            behavior: "smooth"
+        });
+    }, [messages]);
+    
+    function handleInsertCode(code: string){
+        setCode(code);
+    }
+    
     async function handlePromptSubmit(){
         
         setIsGenerating(true);
@@ -31,21 +50,19 @@ function AIAssit({ showAI, aiWidth, isDragging, language, setCode }: Props) {
         
         setMessages(prev => [...prev, {
             role : "user",
-            content: prompt
+            content: prompt,
+            code: ""
         }]);
         setPrompt("");
 
         const data = await res.json();
-        console.log(data);
-
         const code = data.code;
         const AIresponse = data.response;
 
-        setCode(code)
-
         setMessages(prev => [...prev, {
             role: "ai",
-            content: AIresponse
+            content: AIresponse,
+            code: code
         }]);
 
         setIsGenerating(false);
@@ -86,8 +103,34 @@ function AIAssit({ showAI, aiWidth, isDragging, language, setCode }: Props) {
                                 }
                                 `}
                             >{message.content}
+                            { message.code && (
+                                <div className="mt-2">
+                                    <pre className="bg-black mt-2 rounded-lg text-xs p-2 overflow-auto">
+                                        { message.code }
+                                    </pre>
+                                    <button
+                                        onClick={() => handleInsertCode(message.code)}
+                                        className="
+                                            mt-2
+                                            w-full
+                                            py-2
+                                            rounded-lg
+                                            bg-slate-700
+                                            border border-slate-600
+                                            text-slate-200
+                                            text-xs
+                                            font-medium
+                                            hover:bg-slate-600
+                                            transition-colors
+                                            cursor-pointer
+                                        "
+                                    >
+                                        Insert Code
+                                    </button>
+                                </div>)}
                         </div>
                     ))}
+                    <div ref={messagesEndRef} />
             </div>
 
             <div className="flex gap-2 h-10">
